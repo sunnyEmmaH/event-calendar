@@ -1,0 +1,236 @@
+<html>
+<head>
+	<link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<style>
+		table, th, td {
+			border: 1px solid black;
+		}
+	</style>
+</head>
+<body ng-app="myApp" ng-controller="myCtrl">
+	<div class="container">
+	<h3><center>Event Calendar of A Day</center></h3>
+	<div class="row">
+		<form>
+		<div class="col-sm-8">
+			<label>Starttime:</label>
+			<input type="number" ng-model="starttime" placeholder="startime">
+			<span>Enter a number between 0 to 24</span>
+			<br>
+			<br>
+			<label>Endtime:</label>
+			<input type="number" ng-model="endtime" placeholder="endime">
+			<span>Enter a number between 0 to 24(must be NO smaller than Starttime!)</span>
+			<br>
+			<br>
+			<label>Title:</label>
+			<input type="text" ng-model="title" placeholder="title">
+			<br>
+			<br>
+		</div>
+		<div class="col-sm-4">
+			<br>
+			<br>
+			<button class="w3-btn w3-green w3-ripple" ng-disabled="error || incomplete" ng-click="pushNums()">Save Changes</button>
+		</div>
+		</form>
+	</div>
+		<div class="row">
+			<div class="col-sm-4">
+			<table>
+				<tr>
+					<th>Starttime</th>
+					<th>Endtime</th>
+					<th>Title</th>
+					<th>Delete</th>
+				</tr>
+				<tr ng-repeat="num in nums">
+					<td>{{ num.starttime }}</td>
+					<td>{{ num.endtime }}</td>
+					<td>{{ num.title }}</td>
+					<td><button class="w3-btn w3-ripple" ng-click="deleteNum(num.id)">Delete</button></td>
+				</tr>
+			</table>
+			</div>
+			
+			<div class="col-sm-8">
+			<canvas id="myCanvas" width="500" height="480" style="border:5px solid #000000;">
+				Your browser does not support the HTML5 canvas tag.
+			</canvas>
+			
+			</div>
+		</div>
+	</div>
+<script>		 
+	angular.module('myApp', []).controller('myCtrl', function($scope) {
+		$scope.nums=[{id:0, starttime:0, endtime:5, title:"homework"},
+		      {id:1, starttime:4, endtime:6, title:"sweep"},
+			  {id:2, starttime:3, endtime:8, title:"think"},
+		      {id:3, starttime:7, endtime:9, title:"code"},
+		      {id:4, starttime:10, endtime:14, title:"shop"},
+		      {id:5, starttime:12, endtime:17, title:"cook"}
+             ];	
+		var index=5;
+		$scope.error = false;
+		$scope.incomplete = false;
+		$scope.starttime='';
+		$scope.endtime='';
+		$scope.title='';
+		
+		$scope.$watch('stattime',function() {$scope.test();});
+		$scope.$watch('endtime',function() {$scope.test();});
+		$scope.$watch('title',function() {$scope.test();});		
+		$scope.test = function() {
+		  if ($scope.endtime<=$scope.starttime || $scope.starttime<0 || $scope.endtime<0 || $scope.endtime>24 || $scope.endtime>24) {
+			$scope.error = true;
+			} else {
+			$scope.error = false;
+		  }
+		  $scope.incomplete = false;
+		  if (!$scope.starttime ||!$scope.endtime || !$scope.title.length) {
+			 $scope.incomplete = true;
+		  }
+		};		
+		/////////////////================save button========================
+		$scope.pushNums=function(){
+			index++;
+			$scope.nums.push({id:index, starttime:$scope.starttime, endtime:$scope.endtime, title:$scope.title});
+			$scope.starttime='';
+			$scope.endtime='';
+			$scope.title='';
+			var array=calendar($scope.nums);
+			document.getElementById("myCanvas").style.display="";
+			var c = document.getElementById("myCanvas");
+			var ctx = c.getContext("2d");
+			ctx.clearRect(0, 0, c.width, c.height);
+			ctx.beginPath();
+			drawCalendar(array);
+		}
+		///////////////////=========delete button============================
+		$scope.deleteNum=function(id){
+			for(var i=0; i<$scope.nums.length; i++){
+				if($scope.nums[i].id==id){
+					$scope.nums.splice(i, 1);
+					break;
+				}
+			}
+			array=calendar($scope.nums);
+			document.getElementById("myCanvas").style.display="";
+			var c = document.getElementById("myCanvas");
+			var ctx = c.getContext("2d");
+			ctx.clearRect(0, 0, c.width, c.height);
+			ctx.beginPath();
+			drawCalendar(array);				
+			return;
+		}
+		/////////////////////==================draw calendar==================		
+		var width=500;
+		var height=480;	
+		var drawCalendar=function(m){
+			var c = document.getElementById("myCanvas");
+			var ctx = c.getContext("2d");
+			for(var k=0; k<=24; k++){
+				var str=k.toString()+":00";
+				ctx.fillText(str, 0 ,k*20); 
+			}
+			for(var j=0; j<m.length; j++){
+				ctx.rect(m[j][0], m[j][1], m[j][2], m[j][3]);
+				ctx.fillText(m[j][4], m[j][0]+ m[j][2]/2-5,m[j][1]+m[j][3]/2);
+			}
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = 'black';
+			ctx.stroke();
+			return;
+		}
+		var deleteCalendar=function(){
+			var c = document.getElementById("myCanvas");
+			var ctx = c.getContext("2d");
+			ctx.save();
+			ctx.setTransform(1,0,0,1,0,0);
+			ctx.clearRect(0, 0, c.width, c.height);
+		}
+		
+		function sortByStart(array, starttime){
+			return array.sort(function(a, b){
+				var x=a[starttime];
+				var y=b[starttime];
+				return ((x<y)? -1 : ((x>y)? 1 : 0));
+			});
+		}
+		var calendar=function(nums){
+			if(!nums.length) return [];
+			var res=[];
+			sortByStart(nums, 'starttime');
+			var begin=0;
+			var j=0;
+			var comp=0;
+			for(i=0; i<nums.length; i++){
+				if(nums[i].starttime<comp){
+					j++;
+					comp=Math.max(comp, nums[i].endtime);
+					if(i==nums.length-1){
+						var len=width/j;
+						var y=0;
+						for(var k=begin; k<=i; k++){
+							var ans=[];
+							var a=y;
+							var b=nums[k].starttime*height/24;
+							var c=len;
+							var d=(nums[k].endtime-nums[k].starttime)*height/24
+							y=y+len;
+							ans.push(a);
+							ans.push(b);
+							ans.push(c);
+							ans.push(d);
+							ans.push(nums[k].title);
+							res.push(ans);
+						}
+					}
+				}
+				else{
+					var len=width/j;
+					var y=0;
+					for(var k=begin; k<i; k++){
+						var ans=[];
+						var a=y;
+						var b=nums[k].starttime*height/24;
+						var c=len;
+						var d=(nums[k].endtime-nums[k].starttime)*height/24
+						y=y+len;
+						ans.push(a);
+						ans.push(b);
+						ans.push(c);
+						ans.push(d);
+						ans.push(nums[k].title);
+						res.push(ans);						
+					}
+					j=1;
+					comp=nums[i].endtime;
+					begin=i;
+					if(i==nums.length-1){
+						var ans=[];
+						var a=0;
+						var b=nums[i].starttime*height/24;
+						var c=width;
+						var d=(nums[i].endtime-nums[i].starttime)*height/24
+						ans.push(a);
+						ans.push(b);
+						ans.push(c);
+						ans.push(d);
+						ans.push(nums[i].title);
+						res.push(ans);
+					}
+				}				
+			}	
+			console.log(res);
+			return res;					
+		}
+		var array=[];
+		array=calendar($scope.nums);
+		drawCalendar(array);
+	});
+</script>
+</body>
+</html>
